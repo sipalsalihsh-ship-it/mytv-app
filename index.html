@@ -27,7 +27,7 @@
         }
 
         .header h1 {
-            margin: 0 0 10px 0;
+            margin: 0;
             color: #e50914;
             font-size: 24px;
         }
@@ -39,11 +39,13 @@
             background: #000;
             border-radius: 10px;
             overflow: hidden;
+            position: relative;
         }
 
-        video {
+        video, iframe {
             width: 100%;
-            aspect-ratio: 16/9;
+            height: 250px;
+            border: none;
             display: block;
         }
 
@@ -63,6 +65,7 @@
             text-align: center;
             cursor: pointer;
             font-weight: bold;
+            font-size: 13px;
         }
 
         .channel-card.active {
@@ -77,7 +80,7 @@
         <h1>⚽ MyTV+ Sport</h1>
     </div>
 
-    <div class="player-container">
+    <div class="player-container" id="playerBox">
         <video id="video" controls playsinline muted></video>
     </div>
 
@@ -88,53 +91,54 @@
         navigator.serviceWorker.register('sw.js');
       }
 
+      // beIN Sports قاناللىرى ئۇلىنىشى
       const sportsChannels = [
-        { name: "beIN Sports News", url: "https://corsproxy.io/?" + encodeURIComponent("https://beinsports.akamaized.net/hls/live/2034053/beinnews/master.m3u8") },
-        { name: "Test Sport 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
-        { name: "Test Sport 2", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }
+        { name: "beIN Sports News", type: "hls", url: "https://corsproxy.io/?" + encodeURIComponent("https://beinsports.akamaized.net/hls/live/2034053/beinnews/master.m3u8") },
+        { name: "beIN Sports 1", type: "iframe", url: "https://vsn.live/embed/bein1.php" },
+        { name: "Test Stream HD", type: "hls", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
       ];
 
-      const video = document.getElementById('video');
-      const channelGrid = document.getElementById('channelGrid');
+      const playerBox = document.getElementById('playerBox');
       let hls = null;
 
-      function playChannel(url, element) {
+      function playChannel(ch, element) {
         document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
 
-        if (url.includes('.m3u8')) {
+        if (ch.type === "iframe") {
+          if (hls) hls.destroy();
+          playerBox.innerHTML = <iframe src="${ch.url}" allowfullscreen scrolling="no"></iframe>;
+        } else {
+          playerBox.innerHTML = <video id="video" controls playsinline muted></video>;
+          const video = document.getElementById('video');
+
           if (Hls.isSupported()) {
             if (hls) hls.destroy();
             hls = new Hls();
-            hls.loadSource(url);
+            hls.loadSource(ch.url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
               video.play().catch(e => console.log(e));
             });
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = url;
+            video.src = ch.url;
             video.play();
           }
-        } else {
-          if (hls) hls.destroy();
-          video.src = url;
-          video.play();
         }
       }
 
+      const channelGrid = document.getElementById('channelGrid');
       sportsChannels.forEach((ch, index) => {
         const card = document.createElement('div');
         card.className = 'channel-card';
-        card.innerHTML = ch.name;
-        card.onclick = () => playChannel(ch.url, card);
+        card.innerText = ch.name;
+        card.onclick = () => playChannel(ch, card);
         channelGrid.appendChild(card);
 
-        if (index === 0) playChannel(ch.url, card);
+        if (index === 0) playChannel(ch, card);
       });
     </script>
 
 </body>
 </html>
-Sent
-Compose
-Write to
+
