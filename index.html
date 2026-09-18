@@ -1,69 +1,199 @@
 <!DOCTYPE html>
-<html lang="ku">
+<html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyTV Channel</title>
+    <title>MyTV+</title>
     
-    <!-- PWA Links -->
     <link rel="manifest" href="manifest.json">
-    
-    <!-- HLS.js Library for Streaming -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
             background-color: #121212;
             color: #ffffff;
-            text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 12px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #e50914;
+            font-size: 26px;
         }
 
         .player-container {
-            max-width: 800px;
-            margin: 20px auto;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto 15px auto;
             background: #000;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
 
         video {
             width: 100%;
-            height: auto;
+            aspect-ratio: 16/9;
             display: block;
+        }
+
+        /* بەشەکان (Categories) */
+        .categories {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .cat-btn {
+            background: #2a2a2a;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .cat-btn.active {
+            background: #e50914;
+        }
+
+        /* گرید/تۆڕی کەناڵەکان */
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .channel-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .channel-card:hover, .channel-card.active {
+            border-color: #e50914;
+            background: #282828;
+            transform: scale(1.03);
+        }
+
+        .channel-card p {
+            margin: 0;
+            font-size: 13px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <h1>MyTV Channel</h1>
+    <div class="header">
+        <h1>MyTV+</h1>
+    </div>
 
     <div class="player-container">
         <video id="video" controls autoplay muted></video>
     </div>
 
+    <!-- بەشەکانی ئەپەکە -->
+    <div class="categories" id="categories">
+        <button class="cat-btn active" onclick="filterCategory('all', this)">هەمووی</button>
+        <button class="cat-btn" onclick="filterCategory('kurdish', this)">کەناڵە کوردییەکان</button>
+        <button class="cat-btn" onclick="filterCategory('sports', this)">وەرزشی</button>
+        <button class="cat-btn" onclick="filterCategory('news', this)">هەواڵ</button>
+    </div>
+
+    <!-- کەناڵەکان -->
+    <div class="channel-grid" id="channelGrid"></div>
+
     <script>
-      // Service Worker Registration
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');
       }
 
-      // Video Stream Setup
-      const video = document.getElementById('video');
-      // استبدل هذا الرابط برابط القناة المباشر الخاص بك (بصيغة m3u8)
-      const streamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+      // لیستی کەناڵە کوردی و وەرزشییەکان
+      const channels = [
+        // کەناڵە کوردییەکان
+        { id: 1, name: "Kurdistan 24", category: "kurdish", url: "https://k24-live.akamaized.net/hls/live/2033282/k24/master.m3u8" },
+        { id: 2, name: "Rudaw", category: "kurdish", url: "https://rudaw.akamaized.net/hls/live/2034038/rudaw/master.m3u8" },
+        { id: 3, name: "Zagros TV", category: "kurdish", url: "https://zagrostv.akamaized.net/hls/live/2034181/zagros/master.m3u8" },
+        { id: 4, name: "Channel 8", category: "kurdish", url: "https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8" },
+        { id: 5, name: "NRT", category: "kurdish", url: "https://stream.nrt.tv/live/nrt.m3u8" },
+        { id: 6, name: "WAAR TV", category: "kurdish", url: "https://stream.waartv.com/live/waar.m3u8" },
+        
+        // کەناڵە وەرزشییەکان
+        { id: 7, name: "Kurdish Sport", category: "sports", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+        { id: 8, name: "AD Sports 1", category: "sports", url: "https://adtv.akamaized.net/hls/live/2035987/ADSPORTS1/master.m3u8" },
+        { id: 9, name: "AD Sports 2", category: "sports", url: "https://adtv.akamaized.net/hls/live/2035988/ADSPORTS2/master.m3u8" },
+        { id: 10, name: "Dubai Sports", category: "sports", url: "https://dmi.akamaized.net/hls/live/2035956/dubaisports/master.m3u8" },
+        { id: 11, name: "Yalla Sport", category: "sports", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+      ];
 
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(streamUrl);
-        hls.attachMedia(video);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native support for Safari / iOS
-        video.src = streamUrl;
+      const video = document.getElementById('video');
+      const channelGrid = document.getElementById('channelGrid');
+      let hls = null;
+
+      function playChannel(url, element) {
+        document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+
+        if (Hls.isSupported()) {
+          if (hls) hls.destroy();
+          hls = new Hls();
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = url;
+          video.play();
+        }
       }
+
+      function renderChannels(categoryFilter = 'all') {
+        channelGrid.innerHTML = '';
+        const filtered = categoryFilter === 'all' 
+            ? channels 
+            : channels.filter(c => c.category === categoryFilter);
+
+        filtered.forEach((ch, index) => {
+          const card = document.createElement('div');
+          card.className = 'channel-card';
+          card.innerHTML = <p>${ch.name}</p>;
+          card.onclick = () => playChannel(ch.url, card);
+          channelGrid.appendChild(card);
+
+          if (index === 0 && categoryFilter === 'all') playChannel(ch.url, card);
+        });
+      }
+
+      function filterCategory(cat, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderChannels(cat);
+      }
+
+      // لە دەستپێکدا هەموو کەناڵەکان دەردەکەون
+      renderChannels();
     </script>
 
 </body>
