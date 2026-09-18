@@ -27,9 +27,20 @@
         }
 
         .header h1 {
-            margin: 0;
+            margin: 0 0 10px 0;
             color: #e50914;
-            font-size: 26px;
+            font-size: 24px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background-color: #e50914;
+            color: #ffffff;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
         }
 
         .player-container {
@@ -39,7 +50,6 @@
             background: #000;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
 
         video {
@@ -51,7 +61,7 @@
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
+            gap: 10px;
             max-width: 900px;
             margin: 0 auto;
         }
@@ -59,37 +69,30 @@
         .channel-card {
             background: #1e1e1e;
             border: 1px solid #333;
-            border-radius: 10px;
-            padding: 15px 10px;
+            border-radius: 8px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
-            transition: 0.2s;
+            font-weight: bold;
         }
 
-        .channel-card:hover, .channel-card.active {
+        .channel-card.active {
             border-color: #e50914;
             background: #e50914;
-            transform: scale(1.03);
-        }
-
-        .channel-card p {
-            margin: 0;
-            font-size: 14px;
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>MyTV+ Sport ⚽</h1>
+        <h1>⚽ MyTV+ Sport</h1>
+        <a href="mytv.apk" class="download-btn" download>📲 داونلۆدکردنی APK</a>
     </div>
 
     <div class="player-container">
-        <video id="video" controls autoplay muted></video>
+        <video id="video" controls playsinline muted></video>
     </div>
 
-    <!-- قائمة القنوات الرياضية -->
     <div class="channel-grid" id="channelGrid"></div>
 
     <script>
@@ -97,11 +100,11 @@
         navigator.serviceWorker.register('sw.js');
       }
 
-      // قائمة القنوات الرياضية الشغالة
+      // بەستەری کەناڵە بەهێزەکان
       const sportsChannels = [
-        { id: 1, name: "Sport Stream 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
-        { id: 2, name: "Sport Stream 2", url: "https://playertest.longtailvideo.com/adaptive/oceans/oceans.m3u8" },
-        { id: 3, name: "RedBull Sport", url: "https://rbmn-live.akamaized.net/hls/live/590929/FLOSPORTS/master.m3u8" }
+        { name: "Test Stream 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+        { name: "Bahrain Sport", url: "https://5c7b683162943.streamlock.net/live/ngrp:sportsone_all/playlist.m3u8" },
+        { name: "Sample MP4", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }
       ];
 
       const video = document.getElementById('video');
@@ -112,34 +115,35 @@
         document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
 
-        if (Hls.isSupported()) {
+        if (url.endsWith('.m3u8')) {
+          if (Hls.isSupported()) {
+            if (hls) hls.destroy();
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+              video.play();
+            });
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
+          }
+        } else {
           if (hls) hls.destroy();
-          hls = new Hls();
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(e => console.log("Autoplay issue: ", e));
-          });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;
           video.play();
         }
       }
 
-      function renderChannels() {
-        channelGrid.innerHTML = '';
-        sportsChannels.forEach((ch, index) => {
-          const card = document.createElement('div');
-          card.className = 'channel-card';
-          card.innerHTML = <p>${ch.name}</p>;
-          card.onclick = () => playChannel(ch.url, card);
-          channelGrid.appendChild(card);
+      sportsChannels.forEach((ch, index) => {
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        card.innerHTML = ch.name;
+        card.onclick = () => playChannel(ch.url, card);
+        channelGrid.appendChild(card);
 
-          if (index === 0) playChannel(ch.url, card);
-        });
-      }
-
-      renderChannels();
+        if (index === 0) playChannel(ch.url, card);
+      });
     </script>
 
 </body>
