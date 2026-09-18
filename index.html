@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTV+ Sport</title>
     
-    <!-- بەستنەوەی فایلی manifest بۆ ئەپی PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
     
-    <!-- پشتیوانی وێبگەڕی Safari لەسەر ئایفۆن (iOS) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MyTV+">
 
-    <!-- کتێبخانەی HLS.js بۆ لێدانی پەخشی M3U8 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
@@ -77,16 +74,13 @@
         <h1>⚽ MyTV+ Sport Live</h1>
     </div>
 
-    <!-- شوێنی لێدانی ڤیدیۆ -->
     <div class="player-container">
         <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
-    <!-- دوگمەی کەناڵەکان -->
     <div class="grid" id="channelGrid"></div>
 
     <script>
-      // لیستی کەناڵەکان - دەتوانیت بەپێی ویستی خۆت لینکی نوێی M3U8 لێرە زیاتر بپێست بکەیت
       const channels = [
         { 
           name: "beIN Sports News", 
@@ -97,8 +91,8 @@
           url: "https://alkasslive.akamaized.net/hls/live/2004245/alkass1/master.m3u8" 
         },
         { 
-          name: "KurdSat Sport", 
-          url: "https://live.kurdsat.tv/hls/kurdsatsport.m3u8" 
+          name: "AD Sports 1", 
+          url: "https://live.adsports.ae/hls/adsports1.m3u8" 
         }
       ];
 
@@ -116,7 +110,6 @@
           hls.loadSource(url);
           hls.attachMedia(video);
 
-          // زانینی هەڵە ئەگەر کەناڵەکە کاری نەردکرد
           hls.on(Hls.Events.ERROR, function (event, data) {
             if (data.fatal) {
               alert("داوای لێبوردن دەکەین، ئەم کەناڵە لە ئێستادا لە پەخش کەوتووە یان لینکەکەی تێکچووە!");
@@ -127,7 +120,6 @@
             video.play().catch(e => console.log("Autoplay blocked"));
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // تایبەت بە وێبگەڕی Safari لەسەر ئایفۆن (iOS)
           video.src = url;
           video.onerror = function() {
             alert("داوای لێبوردن دەکەین، ئەم کەناڵە لە ئێستادا لە پەخش کەوتووە!");
@@ -138,7 +130,6 @@
         }
       }
 
-      // دروستکردنی دوگمەی کەناڵەکان خۆکارانە
       channels.forEach((ch, index) => {
         const b = document.createElement('button');
         b.className = 'btn';
@@ -149,11 +140,10 @@
         if (index === 0) playChannel(ch.url, b);
       });
 
-      // تۆمارکردنی Service Worker بۆ پشتیوانی PWA
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
-          .then(() => console.log('Service Worker کاردەکات'))
-          .catch(err => console.log('کێشە لە Service Worker هەیە:', err));
+          .then(() => console.log('Service Worker Registered'))
+          .catch(err => console.log('SW Registration Failed:', err));
       }
     </script>
 
