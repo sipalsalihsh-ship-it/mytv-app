@@ -4,116 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTV+ Sport</title>
-    <!-- Hls.js library for streaming m3u8 on all mobile browsers -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <link rel="manifest" href="manifest.json">
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
+            font-family: Arial, sans-serif;
             background-color: #121212;
             color: #ffffff;
-            font-family: sans-serif;
+            padding: 10px;
             text-align: center;
-            padding: 15px;
         }
+
         .header {
-            background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 12px;
+            padding: 12px;
+            background: #1e1e1e;
+            border-radius: 8px;
             margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
+
         .header h1 {
-            color: #ff2a2a;
+            color: #e50914;
             font-size: 22px;
         }
+
         .player-container {
             width: 100%;
-            max-width: 800px;
-            margin: 0 auto 20px auto;
-            background-color: #000;
-            border-radius: 12px;
+            max-width: 900px;
+            margin: 0 auto 15px auto;
+            background: #000;
+            border-radius: 10px;
             overflow: hidden;
             aspect-ratio: 16 / 9;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            position: relative;
         }
-        video {
+
+        iframe, video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            border: none;
         }
-        .channels-grid {
+
+        .channel-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-            max-width: 800px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            max-width: 900px;
             margin: 0 auto;
         }
-        .btn-channel {
-            background-color: #262626;
-            color: #fff;
-            border: 2px solid #3a3a3a;
-            padding: 12px;
+
+        .channel-card {
+            background: #1e1e1e;
+            border: 1px solid #333;
             border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
+            padding: 12px;
             cursor: pointer;
-            transition: 0.2s;
+            font-weight: bold;
+            font-size: 14px;
         }
-        .btn-channel:hover, .btn-channel:active {
-            background-color: #ff2a2a;
-            border-color: #ff2a2a;
+
+        .channel-card.active {
+            border-color: #e50914;
+            background: #e50914;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>MyTV+ Sport ⚽</h1>
+        <h1>⚽ MyTV+ Sport</h1>
     </div>
 
-    <div class="player-container">
-        <video id="videoPlayer" controls autoplay playsinline></video>
+    <div class="player-container" id="playerContainer">
+        <!-- Player loads here -->
     </div>
 
-    <div class="channels-grid">
-        <button class="btn-channel" onclick="playStream('https://top.beinsportm3u.com/beIN1/index.m3u8')">beIN Sports 1</button>
-        <button class="btn-channel" onclick="playStream('https://top.beinsportm3u.com/news/index.m3u8')">beIN News</button>
-        <button class="btn-channel" onclick="playStream('https://live.kurdistan24.net/k24/live/index.m3u8')">Kurdistan 24</button>
-    </div>
+    <div class="channel-grid" id="channelGrid"></div>
 
     <script>
-        const video = document.getElementById('videoPlayer');
-        let hls;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
 
-        function playStream(url) {
-            if (Hls.isSupported()) {
-                if (hls) {
-                    hls.destroy();
-                }
-                hls = new Hls();
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play();
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // For Safari on iPhone / Mac
-                video.src = url;
-                video.addEventListener('loadedmetadata', function() {
-                    video.play();
-                });
-            } else {
-                alert('پێگەڕەکەت پشتیوانیی ئەم جۆرە پەخشە ناکات!');
-            }
-        }
+      // کەناڵەکان بە بەستەری جێگیر و ئامادەکراو
+      const sportsChannels = [
+        { name: "beIN Sports News", embed: "https://www.youtube.com/embed/live_stream?channel=UC4i_9M_S_e0A1P4G85y-LgQ" },
+        { name: "KurdSat Sport", embed: "https://www.youtube.com/embed/live_stream?channel=UCj8-H0S_X3k0u_Kz0S21H-w" },
+        { name: "Test Player", embed: "https://www.youtube.com/embed/5qap5aO4i9A" }
+      ];
 
-        // دەستپێکردنی بێین سپۆرت 1 وەک سەرەتایی
-        playStream('https://top.beinsportm3u.com/beIN1/index.m3u8');
+      const playerContainer = document.getElementById('playerContainer');
+      const channelGrid = document.getElementById('channelGrid');
+
+      function playChannel(embedUrl, element) {
+        document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+
+        playerContainer.innerHTML = <iframe src="${embedUrl}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>;
+      }
+
+      sportsChannels.forEach((ch, index) => {
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        card.innerText = ch.name;
+        card.onclick = () => playChannel(ch.embed, card);
+        channelGrid.appendChild(card);
+
+        if (index === 0) playChannel(ch.embed, card);
+      });
     </script>
 
 </body>
