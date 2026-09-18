@@ -7,28 +7,64 @@
     
     <!-- PWA Links -->
     <link rel="manifest" href="manifest.json">
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-      }
-    </script>
+    
+    <!-- HLS.js Library for Streaming -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
-        .player {
-            height: 300px;
-            background: #222;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            border: 2px solid #333;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .player-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
         }
     </style>
 </head>
 <body>
+
     <h1>MyTV Channel</h1>
-    <div class="player">
-        <p>...پەخشی ڕاستەوخۆ لێرە دیار دەبێت...</p>
+
+    <div class="player-container">
+        <video id="video" controls autoplay muted></video>
     </div>
+
+    <script>
+      // Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+
+      // Video Stream Setup
+      const video = document.getElementById('video');
+      // استبدل هذا الرابط برابط القناة المباشر الخاص بك (بصيغة m3u8)
+      const streamUrl = 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8';
+
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native support for Safari / iOS
+        video.src = streamUrl;
+      }
+    </script>
+
 </body>
 </html>
