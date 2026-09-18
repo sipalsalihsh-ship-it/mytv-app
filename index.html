@@ -32,17 +32,6 @@
             font-size: 24px;
         }
 
-        .download-btn {
-            display: inline-block;
-            background-color: #e50914;
-            color: #ffffff;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 13px;
-        }
-
         .player-container {
             width: 100%;
             max-width: 900px;
@@ -86,7 +75,6 @@
 
     <div class="header">
         <h1>⚽ MyTV+ Sport</h1>
-        <a href="mytv.apk" class="download-btn" download>📲 داونلۆدکردنی APK</a>
     </div>
 
     <div class="player-container">
@@ -100,11 +88,10 @@
         navigator.serviceWorker.register('sw.js');
       }
 
-      // بەستەری کەناڵە بەهێزەکان
       const sportsChannels = [
-        { name: "Test Stream 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
-        { name: "Bahrain Sport", url: "https://5c7b683162943.streamlock.net/live/ngrp:sportsone_all/playlist.m3u8" },
-        { name: "Sample MP4", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }
+        { name: "beIN Sports News", url: "https://corsproxy.io/?" + encodeURIComponent("https://beinsports.akamaized.net/hls/live/2034053/beinnews/master.m3u8") },
+        { name: "Test Sport 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+        { name: "Test Sport 2", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }
       ];
 
       const video = document.getElementById('video');
@@ -115,14 +102,14 @@
         document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
 
-        if (url.endsWith('.m3u8')) {
+        if (url.includes('.m3u8')) {
           if (Hls.isSupported()) {
             if (hls) hls.destroy();
             hls = new Hls();
             hls.loadSource(url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
-              video.play();
+              video.play().catch(e => console.log(e));
             });
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = url;
@@ -148,3 +135,6 @@
 
 </body>
 </html>
+Sent
+Compose
+Write to
