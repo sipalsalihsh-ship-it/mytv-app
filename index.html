@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MyTV+">
 
+    <!-- کتێبخانەی HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
@@ -74,14 +75,21 @@
         <h1>⚽ MyTV+ Sport Live</h1>
     </div>
 
+    <!-- شوێنی لێدانی ڤیدیۆ -->
     <div class="player-container">
-        <video id="videoPlayer" controls autoplay playsinline></video>
+        <video id="videoPlayer" controls playsinline muted></video>
     </div>
 
+    <!-- دوگمەی کەناڵەکان -->
     <div class="grid" id="channelGrid"></div>
 
     <script>
+      // لیستی کەناڵەکان بە بەستەری بێ کێشە
       const channels = [
+        { 
+          name: "Test Stream HD", 
+          url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" 
+        },
         { 
           name: "beIN Sports News", 
           url: "https://live.beinsports.com/hls/live/2034032/beIN_NEWS/master.m3u8" 
@@ -89,10 +97,6 @@
         { 
           name: "Alkass ONE HD", 
           url: "https://alkasslive.akamaized.net/hls/live/2004245/alkass1/master.m3u8" 
-        },
-        { 
-          name: "AD Sports 1", 
-          url: "https://live.adsports.ae/hls/adsports1.m3u8" 
         }
       ];
 
@@ -106,30 +110,37 @@
 
         if (Hls.isSupported()) {
           if (hls) hls.destroy();
-          hls = new Hls();
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+          });
           hls.loadSource(url);
           hls.attachMedia(video);
 
+          // تۆمارکردنی هەڵەکان لە Console بە بێ ڕاگرتنی شاشەکە
           hls.on(Hls.Events.ERROR, function (event, data) {
-            if (data.fatal) {
-              alert("داوای لێبوردن دەکەین، ئەم کەناڵە لە ئێستادا لە پەخش کەوتووە یان لینکەکەی تێکچووە!");
-            }
+            console.warn("HLS Stream notice:", data);
           });
 
           hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play().catch(e => console.log("Autoplay blocked"));
+            video.play().catch(() => {
+              video.muted = true;
+              video.play();
+            });
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // تایبەت بە Safari لە ئایفۆن (iOS)
           video.src = url;
-          video.onerror = function() {
-            alert("داوای لێبوردن دەکەین، ئەم کەناڵە لە ئێستادا لە پەخش کەوتووە!");
-          };
           video.addEventListener('loadedmetadata', function() {
-            video.play();
+            video.play().catch(() => {
+              video.muted = true;
+              video.play();
+            });
           });
         }
       }
 
+      // دروستکردنی دوگمەکان
       channels.forEach((ch, index) => {
         const b = document.createElement('button');
         b.className = 'btn';
@@ -140,10 +151,11 @@
         if (index === 0) playChannel(ch.url, b);
       });
 
+      // تۆمارکردنی Service Worker
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js')
           .then(() => console.log('Service Worker Registered'))
-          .catch(err => console.log('SW Registration Failed:', err));
+          .catch(err => console.log('SW Error:', err));
       }
     </script>
 
