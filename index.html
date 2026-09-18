@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyTV+</title>
+    <title>MyTV+ Sport</title>
     
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -48,33 +48,9 @@
             display: block;
         }
 
-        .categories {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .cat-btn {
-            background: #2a2a2a;
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 20px;
-            white-space: nowrap;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .cat-btn.active {
-            background: #e50914;
-        }
-
         .channel-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 12px;
             max-width: 900px;
             margin: 0 auto;
@@ -84,7 +60,7 @@
             background: #1e1e1e;
             border: 1px solid #333;
             border-radius: 10px;
-            padding: 12px 8px;
+            padding: 15px 10px;
             text-align: center;
             cursor: pointer;
             transition: 0.2s;
@@ -92,13 +68,13 @@
 
         .channel-card:hover, .channel-card.active {
             border-color: #e50914;
-            background: #282828;
+            background: #e50914;
             transform: scale(1.03);
         }
 
         .channel-card p {
             margin: 0;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
         }
     </style>
@@ -106,19 +82,14 @@
 <body>
 
     <div class="header">
-        <h1>MyTV+</h1>
+        <h1>MyTV+ Sport ⚽</h1>
     </div>
 
     <div class="player-container">
         <video id="video" controls autoplay muted></video>
     </div>
 
-    <div class="categories" id="categories">
-        <button class="cat-btn active" onclick="filterCategory('all', this)">هەمووی</button>
-        <button class="cat-btn" onclick="filterCategory('kurdish', this)">کوردستان</button>
-        <button class="cat-btn" onclick="filterCategory('sports', this)">وەرزشی</button>
-    </div>
-
+    <!-- قائمة القنوات الرياضية -->
     <div class="channel-grid" id="channelGrid"></div>
 
     <script>
@@ -126,12 +97,11 @@
         navigator.serviceWorker.register('sw.js');
       }
 
-      // کەناڵەکان بە بەستەری کراوە و کارا
-      const channels = [
-        { id: 1, name: "کەناڵی تاقیکاری 1", category: "kurdish", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
-        { id: 2, name: "کەناڵی تاقیکاری 2", category: "sports", url: "https://playertest.longtailvideo.com/adaptive/oceans/oceans.m3u8" },
-        { id: 3, name: "AD Sports 1", category: "sports", url: "https://corsproxy.io/?" + encodeURIComponent("https://adtv.akamaized.net/hls/live/2035987/ADSPORTS1/master.m3u8") },
-        { id: 4, name: "Dubai Sports", category: "sports", url: "https://corsproxy.io/?" + encodeURIComponent("https://dmi.akamaized.net/hls/live/2035956/dubaisports/master.m3u8") }
+      // قائمة القنوات الرياضية الشغالة
+      const sportsChannels = [
+        { id: 1, name: "Sport Stream 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+        { id: 2, name: "Sport Stream 2", url: "https://playertest.longtailvideo.com/adaptive/oceans/oceans.m3u8" },
+        { id: 3, name: "RedBull Sport", url: "https://rbmn-live.akamaized.net/hls/live/590929/FLOSPORTS/master.m3u8" }
       ];
 
       const video = document.getElementById('video');
@@ -148,7 +118,7 @@
           hls.loadSource(url);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(e => console.log("Autoplay prevented"));
+            video.play().catch(e => console.log("Autoplay issue: ", e));
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;
@@ -156,27 +126,17 @@
         }
       }
 
-      function renderChannels(categoryFilter = 'all') {
+      function renderChannels() {
         channelGrid.innerHTML = '';
-        const filtered = categoryFilter === 'all' 
-            ? channels 
-            : channels.filter(c => c.category === categoryFilter);
-
-        filtered.forEach((ch, index) => {
+        sportsChannels.forEach((ch, index) => {
           const card = document.createElement('div');
           card.className = 'channel-card';
           card.innerHTML = <p>${ch.name}</p>;
           card.onclick = () => playChannel(ch.url, card);
           channelGrid.appendChild(card);
 
-          if (index === 0 && categoryFilter === 'all') playChannel(ch.url, card);
+          if (index === 0) playChannel(ch.url, card);
         });
-      }
-
-      function filterCategory(cat, btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderChannels(cat);
       }
 
       renderChannels();
