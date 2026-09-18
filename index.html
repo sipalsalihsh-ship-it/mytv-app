@@ -4,69 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTV+ Sport</title>
-    
-    <link rel="manifest" href="manifest.json">
-
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: Arial, sans-serif;
             background-color: #121212;
             color: #ffffff;
-            padding: 10px;
+            font-family: sans-serif;
             text-align: center;
+            padding: 15px;
         }
-
         .header {
-            padding: 12px;
-            background: #1e1e1e;
-            border-radius: 8px;
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
             margin-bottom: 15px;
         }
-
-        .header h1 {
-            color: #e50914;
-            font-size: 22px;
-        }
-
+        .header h1 { color: #e50914; font-size: 22px; }
         .player-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto 15px auto;
             background: #000;
             border-radius: 10px;
             overflow: hidden;
             aspect-ratio: 16 / 9;
         }
-
-        iframe, video {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .channel-grid {
+        video { width: 100%; height: 100%; display: block; }
+        .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 10px;
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
         }
-
-        .channel-card {
+        .btn {
             background: #1e1e1e;
+            color: #fff;
             border: 1px solid #333;
-            border-radius: 8px;
             padding: 12px;
-            cursor: pointer;
+            border-radius: 8px;
             font-weight: bold;
-            font-size: 14px;
+            cursor: pointer;
         }
-
-        .channel-card.active {
-            border-color: #e50914;
-            background: #e50914;
-        }
+        .btn.active { background: #e50914; border-color: #e50914; }
     </style>
 </head>
 <body>
@@ -75,42 +56,51 @@
         <h1>⚽ MyTV+ Sport</h1>
     </div>
 
-    <div class="player-container" id="playerContainer">
-        <!-- Player loads here -->
+    <div class="player-container">
+        <video id="video" controls playsinline muted></video>
     </div>
 
-    <div class="channel-grid" id="channelGrid"></div>
+    <div class="grid" id="channelGrid"></div>
 
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-      }
-
-      // کەناڵەکان بە بەستەری جێگیر و ئامادەکراو
-      const sportsChannels = [
-        { name: "beIN Sports News", embed: "https://www.youtube.com/embed/live_stream?channel=UC4i_9M_S_e0A1P4G85y-LgQ" },
-        { name: "KurdSat Sport", embed: "https://www.youtube.com/embed/live_stream?channel=UCj8-H0S_X3k0u_Kz0S21H-w" },
-        { name: "Test Player", embed: "https://www.youtube.com/embed/5qap5aO4i9A" }
+      const channels = [
+        { name: "Test Stream 1", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+        { name: "Test Stream 2", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" }
       ];
 
-      const playerContainer = document.getElementById('playerContainer');
-      const channelGrid = document.getElementById('channelGrid');
+      const video = document.getElementById('video');
+      const grid = document.getElementById('channelGrid');
+      let hls = null;
 
-      function playChannel(embedUrl, element) {
-        document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
-        if(element) element.classList.add('active');
+      function play(url, btn) {
+        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
 
-        playerContainer.innerHTML = <iframe src="${embedUrl}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>;
+        if (url.endsWith('.m3u8')) {
+          if (Hls.isSupported()) {
+            if (hls) hls.destroy();
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.play();
+          }
+        } else {
+          if (hls) hls.destroy();
+          video.src = url;
+          video.play();
+        }
       }
 
-      sportsChannels.forEach((ch, index) => {
-        const card = document.createElement('div');
-        card.className = 'channel-card';
-        card.innerText = ch.name;
-        card.onclick = () => playChannel(ch.embed, card);
-        channelGrid.appendChild(card);
-
-        if (index === 0) playChannel(ch.embed, card);
+      channels.forEach((ch, i) => {
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.innerText = ch.name;
+        b.onclick = () => play(ch.url, b);
+        grid.appendChild(b);
+        if (i === 0) play(ch.url, b);
       });
     </script>
 
