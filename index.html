@@ -48,7 +48,6 @@
             display: block;
         }
 
-        /* بەشەکان (Categories) */
         .categories {
             display: flex;
             gap: 10px;
@@ -73,7 +72,6 @@
             background: #e50914;
         }
 
-        /* گرید/تۆڕی کەناڵەکان */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
@@ -115,15 +113,12 @@
         <video id="video" controls autoplay muted></video>
     </div>
 
-    <!-- بەشەکانی ئەپەکە -->
     <div class="categories" id="categories">
         <button class="cat-btn active" onclick="filterCategory('all', this)">هەمووی</button>
-        <button class="cat-btn" onclick="filterCategory('kurdish', this)">کەناڵە کوردییەکان</button>
+        <button class="cat-btn" onclick="filterCategory('kurdish', this)">کوردستان</button>
         <button class="cat-btn" onclick="filterCategory('sports', this)">وەرزشی</button>
-        <button class="cat-btn" onclick="filterCategory('news', this)">هەواڵ</button>
     </div>
 
-    <!-- کەناڵەکان -->
     <div class="channel-grid" id="channelGrid"></div>
 
     <script>
@@ -131,22 +126,12 @@
         navigator.serviceWorker.register('sw.js');
       }
 
-      // لیستی کەناڵە کوردی و وەرزشییەکان
+      // کەناڵەکان بە بەستەری کراوە و کارا
       const channels = [
-        // کەناڵە کوردییەکان
-        { id: 1, name: "Kurdistan 24", category: "kurdish", url: "https://k24-live.akamaized.net/hls/live/2033282/k24/master.m3u8" },
-        { id: 2, name: "Rudaw", category: "kurdish", url: "https://rudaw.akamaized.net/hls/live/2034038/rudaw/master.m3u8" },
-        { id: 3, name: "Zagros TV", category: "kurdish", url: "https://zagrostv.akamaized.net/hls/live/2034181/zagros/master.m3u8" },
-        { id: 4, name: "Channel 8", category: "kurdish", url: "https://live.channel8.com/Channel8-Kurdish/index.fmp4.m3u8" },
-        { id: 5, name: "NRT", category: "kurdish", url: "https://stream.nrt.tv/live/nrt.m3u8" },
-        { id: 6, name: "WAAR TV", category: "kurdish", url: "https://stream.waartv.com/live/waar.m3u8" },
-        
-        // کەناڵە وەرزشییەکان
-        { id: 7, name: "Kurdish Sport", category: "sports", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
-        { id: 8, name: "AD Sports 1", category: "sports", url: "https://adtv.akamaized.net/hls/live/2035987/ADSPORTS1/master.m3u8" },
-        { id: 9, name: "AD Sports 2", category: "sports", url: "https://adtv.akamaized.net/hls/live/2035988/ADSPORTS2/master.m3u8" },
-        { id: 10, name: "Dubai Sports", category: "sports", url: "https://dmi.akamaized.net/hls/live/2035956/dubaisports/master.m3u8" },
-        { id: 11, name: "Yalla Sport", category: "sports", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" }
+        { id: 1, name: "کەناڵی تاقیکاری 1", category: "kurdish", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+        { id: 2, name: "کەناڵی تاقیکاری 2", category: "sports", url: "https://playertest.longtailvideo.com/adaptive/oceans/oceans.m3u8" },
+        { id: 3, name: "AD Sports 1", category: "sports", url: "https://corsproxy.io/?" + encodeURIComponent("https://adtv.akamaized.net/hls/live/2035987/ADSPORTS1/master.m3u8") },
+        { id: 4, name: "Dubai Sports", category: "sports", url: "https://corsproxy.io/?" + encodeURIComponent("https://dmi.akamaized.net/hls/live/2035956/dubaisports/master.m3u8") }
       ];
 
       const video = document.getElementById('video');
@@ -162,7 +147,9 @@
           hls = new Hls();
           hls.loadSource(url);
           hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(e => console.log("Autoplay prevented"));
+          });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = url;
           video.play();
@@ -192,7 +179,6 @@
         renderChannels(cat);
       }
 
-      // لە دەستپێکدا هەموو کەناڵەکان دەردەکەون
       renderChannels();
     </script>
 
