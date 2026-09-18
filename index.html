@@ -4,97 +4,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyTV+ Sport</title>
+    
+    <!-- ربط ملف Manifest لتفعيل خيار Add to Home Screen -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
+    
+    <!-- دعم متصفح Safari على iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MyTV+">
+
+    <!-- مكتبة HLS.js لتشغيل بث M3U8 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             text-align: center;
-            padding: 10px;
+            padding: 15px;
         }
         .header {
             background-color: #1e1e1e;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 10px;
             margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        .header h1 { color: #e50914; font-size: 20px; }
+        .header h1 { color: #e50914; font-size: 22px; }
         .player-container {
             width: 100%;
-            max-width: 800px;
-            margin: 0 auto 15px auto;
+            max-width: 900px;
+            margin: 0 auto 20px auto;
             background: #000;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             aspect-ratio: 16 / 9;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.8);
         }
-        iframe {
+        video {
             width: 100%;
             height: 100%;
-            border: none;
+            object-fit: contain;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 10px;
-            max-width: 800px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            max-width: 900px;
             margin: 0 auto;
         }
         .btn {
             background: #1e1e1e;
             color: #fff;
             border: 1px solid #333;
-            padding: 12px;
+            padding: 14px 10px;
             border-radius: 8px;
             font-weight: bold;
+            font-size: 14px;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
+        .btn:hover { background: #2a2a2a; }
         .btn.active { background: #e50914; border-color: #e50914; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>⚽ MyTV+ Sport</h1>
+        <h1>⚽ MyTV+ Sport Live</h1>
     </div>
 
-    <div class="player-container" id="playerContainer">
-        <!-- Iframe player loads here -->
+    <!-- مشغل الفيديو -->
+    <div class="player-container">
+        <video id="videoPlayer" controls autoplay playsinline></video>
     </div>
 
+    <!-- أزرار القنوات -->
     <div class="grid" id="channelGrid"></div>
 
     <script>
+      // قائمة القنوات وررابط M3U8 المباشر
       const channels = [
         { 
-          name: "beIN News Live", 
-          url: "https://www.youtube.com/embed/live_stream?channel=UC4i_9M_S_e0A1P4G85y-LgQ" 
+          name: "beIN Sports News", 
+          url: "https://live.beinsports.com/hls/live/2034032/beIN_NEWS/master.m3u8" 
         },
         { 
-          name: "beIN Sports 1", 
-          url: "https://vidsrc.me/embed/tv" 
+          name: "Alkass ONE HD", 
+          url: "https://alkasslive.akamaized.net/hls/live/2004245/alkass1/master.m3u8" 
+        },
+        { 
+          name: "KurdSat Sport", 
+          url: "https://live.kurdsat.tv/hls/kurdsatsport.m3u8" 
         }
       ];
 
-      const playerContainer = document.getElementById('playerContainer');
+      const video = document.getElementById('videoPlayer');
       const grid = document.getElementById('channelGrid');
+      let hls = null;
 
       function playChannel(url, btn) {
         document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
 
-        playerContainer.innerHTML = <iframe src="${url}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>;
+        if (Hls.isSupported()) {
+          if (hls) hls.destroy();
+          hls = new Hls();
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play().catch(e => console.log("Autoplay blocked"));
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // دعم خاص لأجهزة iOS Safari
+          video.src = url;
+          video.addEventListener('loadedmetadata', function() {
+            video.play();
+          });
+        }
       }
 
-      channels.forEach((ch, i) => {
+      // بناء أزرار التبديل تلقائياً
+      channels.forEach((ch, index) => {
         const b = document.createElement('button');
         b.className = 'btn';
         b.innerText = ch.name;
         b.onclick = () => playChannel(ch.url, b);
         grid.appendChild(b);
-        if (i === 0) playChannel(ch.url, b);
+        
+        if (index === 0) playChannel(ch.url, b);
       });
+
+      // تسجيل الـ Service Worker لتمكين PWA
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log('Service Worker Registered'))
+          .catch(err => console.log('SW Registration Failed:', err));
+      }
     </script>
 
 </body>

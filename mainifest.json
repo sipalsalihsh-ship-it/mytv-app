@@ -1,14 +1,20 @@
 {
-  "name": "MyTV App",
-  "short_name": "MyTV",
+  "name": "MyTV+ Sports",
+  "short_name": "MyTV+",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#222222",
-  "theme_color": "#222222",
+  "background_color": "#121212",
+  "theme_color": "#e50914",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "https://via.placeholder.com/192/e50914/ffffff?text=MyTV%2B",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512/e50914/ffffff?text=MyTV%2B",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
